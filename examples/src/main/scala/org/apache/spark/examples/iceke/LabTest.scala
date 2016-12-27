@@ -12,7 +12,7 @@ object LabTest {
       System.exit(1)
     }
 
-    val sparkConf = new SparkConf().setAppName("LabTest").setMaster("local")
+    val sparkConf = new SparkConf().setAppName("LabTest").setMaster(args(3))
     val iters = if (args.length > 1) args(1).toInt else 10
     val ctx = new SparkContext(sparkConf)
     val lines = ctx.textFile(args(0))
@@ -20,12 +20,6 @@ object LabTest {
       val parts = s.split("\\s+")
       (parts(0).toInt, parts(1).toInt)
     }
-/**
-    val index1= links.map(_._1)
-    val index2 = links.map(_._2)
-
-    val ice = index1.zip(index2)
-**/
     val result = links.groupByKey()
 
     result.saveAsTextFile(args(2))
