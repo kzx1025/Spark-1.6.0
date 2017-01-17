@@ -132,7 +132,10 @@
       <artifactId>javax.servlet</artifactId>
       <version>${orbit.version}</version>
     </dependency>
-
+    <dependency>
+      <groupId>soot</groupId>
+      <artifactId>soot</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
