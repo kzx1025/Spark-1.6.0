@@ -1,6 +1,7 @@
 package org.apache.spark.examples.iceke
 
 import org.apache.spark.rdd.{RDD, ShuffledRDD}
+import org.apache.spark.util.collection.CompactBuffer
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
@@ -36,7 +37,7 @@ object SparkPRNew {
             var currentContrib = 0.0d
             var currentDestIndex = 0
             var currentDestNum = 0
-            var currentDestList: List[Int] = List.empty
+            var currentDestList: CompactBuffer[Int] = null
 
             def matchRecord(): Boolean = {
               assert(changeVertex)
@@ -56,7 +57,7 @@ object SparkPRNew {
                 if(currentVertex._1==keyRecord){
                   matched = true
                   currentDestNum = tempLink._2.size
-                  currentDestList = tempLink._2.toList
+                  currentDestList = tempLink._2.asInstanceOf[CompactBuffer[Int]]
                   currentDestIndex = 0
                   currentContrib = currentVertex._2/currentDestNum
                   changeVertex = false
