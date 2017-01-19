@@ -39,7 +39,7 @@ TACHYON_URL="http://tachyon-project.org/downloads/files/${TACHYON_VERSION}/${TAC
 
 MAKE_TGZ=false
 NAME=none
-MVN="$SPARK_HOME/build/mvn"
+MVN="/root/feiwang/apache-maven-3.3.9/bin/mvn"
 
 function exit_with_usage {
   echo "make-distribution.sh - tool for making binary distributions of Spark"
