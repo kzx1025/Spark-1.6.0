@@ -232,6 +232,17 @@
             </snapshots>
         </repository>
         <repository>
+            <id>soot-repo</id>
+            <name>Soot Repository</name>
+            <url>http://conjars.org/repo</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
             <id>apache-repo</id>
             <name>Apache Repository</name>
             <url>https://repository.apache.org/content/repositories/releases</url>
@@ -307,17 +318,7 @@
             </snapshots>
         </repository>
         <!-- For transitive dependencies brougt by parquet-thrift -->
-        <repository>
-            <id>soot-repo</id>
-            <name>Soot Repository</name>
-            <url>http://conjars.org/repo</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
+
         <repository>
             <id>twttr-repo</id>
             <name>Twttr Repository</name>
