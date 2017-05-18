@@ -16,10 +16,15 @@ object SparkPR {
     val iters = if (args.length > 1) args(1).toInt else 10
     val ctx = new SparkContext(sparkConf)
     val lines = ctx.textFile(args(0))
-    val links = lines.map{ s =>
+    val text = lines.map{ s =>
       val parts = s.split("\\s+")
       (parts(0).toInt, parts(1).toInt)
-    }.groupByKey().cache()
+    }
+
+    println("!!!!!!!!!!!!!!text length:" + text.count())
+
+    val links = text.groupByKey().cache()
+    println("!!!!!!!!!!!!!!text length:" +links.count())
     var ranks = links.mapValues(v => 1.0)
 
     for (i <- 1 to iters) {
