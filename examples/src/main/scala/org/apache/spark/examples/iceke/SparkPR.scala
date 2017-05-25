@@ -1,5 +1,6 @@
 package org.apache.spark.examples.iceke
 
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkContext, SparkConf}
 
 /**
@@ -21,9 +22,10 @@ object SparkPR {
       (parts(0).toInt, parts(1).toInt)
     }
 
+
     println("!!!!!!!!!!!!!!text length:" + text.count())
 
-    val links = text.groupByKey().cache()
+    val links = text.groupByKey().persist(StorageLevel.MEMORY_ONLY_SER)
     println("!!!!!!!!!!!!!!text length:" +links.count())
     var ranks = links.mapValues(v => 1.0)
 
@@ -41,6 +43,8 @@ object SparkPR {
     //ranks.foreach(t => println(t._1 + ":" + t._2))
 
     ctx.stop()
+    val a = 5:Int
+    println()
   }
 
 
