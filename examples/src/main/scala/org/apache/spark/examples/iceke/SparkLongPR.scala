@@ -1,13 +1,12 @@
 package org.apache.spark.examples.iceke
 
-import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkContext, SparkConf}
 
 /**
   * Created by iceke on 17/6/1.
   */
-object SparkDoublePR {
+object SparkLongPR {
   def main(args: Array[String]) {
     if (args.length < 1) {
       System.err.println("Usage: SparkPageRank <file> <iter> <out>")
@@ -20,7 +19,7 @@ object SparkDoublePR {
     val lines = ctx.textFile(args(0))
     val text = lines.map { s =>
       val parts = s.split("\\s+")
-      (parts(0).toDouble, parts(1).toDouble)
+      (parts(0).toLong, parts(1).toLong)
     }
 
     val links = if(args(5).toInt == 1)
