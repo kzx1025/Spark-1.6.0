@@ -4,9 +4,9 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkContext, SparkConf}
 
 /**
-  * Created by iceke on 17/1/18.
+  * Created by iceke on 17/6/1.
   */
-object SparkPR {
+object SparkFloatPR {
   def main(args: Array[String]) {
     if (args.length < 1) {
       System.err.println("Usage: SparkPageRank <file> <iter> <out>")
@@ -18,14 +18,11 @@ object SparkPR {
     val ctx = new SparkContext(sparkConf)
     val lines = ctx.textFile(args(0))
     val text = lines.map { s =>
-        val parts = s.split("\\s+")
-        (parts(0).toInt, parts(1).toInt)
-      }
+      val parts = s.split("\\s+")
+      (parts(0).toFloat, parts(1).toFloat)
+    }
 
 
-
-
-    //println("!!!!!!!!!!!!!!text length:" + text.count())
 
     val links = if(args(5).toInt == 1)
       text.groupByKey().persist(StorageLevel.MEMORY_ONLY_SER)
@@ -50,6 +47,5 @@ object SparkPR {
     ctx.stop()
 
   }
-
 
 }
