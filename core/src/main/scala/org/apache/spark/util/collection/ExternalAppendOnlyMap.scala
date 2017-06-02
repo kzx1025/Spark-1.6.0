@@ -154,7 +154,7 @@ class ExternalAppendOnlyMap[K, V, C](
       val estimatedSize = currentMap.estimateSize()
 
       //add by kzx
-     /** val ite = currentMap.iterator
+  /**    val ite = currentMap.iterator
       while(ite.hasNext){
         print(ite.next()+", ")
       }
@@ -171,6 +171,8 @@ class ExternalAppendOnlyMap[K, V, C](
       currentMap.changeValue(curEntry._1, update)
       addElementsRead()
     }
+    println("map size is " + SizeEstimator.estimate(currentMap))
+
   }
 
   /**
