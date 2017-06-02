@@ -31,7 +31,7 @@ import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.memory.TaskMemoryManager
 import org.apache.spark.serializer.{DeserializationStream, Serializer}
 import org.apache.spark.storage.{BlockId, BlockManager}
-import org.apache.spark.util.CompletionIterator
+import org.apache.spark.util.{SizeEstimator, CompletionIterator}
 import org.apache.spark.util.collection.ExternalAppendOnlyMap.HashComparator
 import org.apache.spark.executor.ShuffleWriteMetrics
 
@@ -152,6 +152,16 @@ class ExternalAppendOnlyMap[K, V, C](
     while (entries.hasNext) {
       curEntry = entries.next()
       val estimatedSize = currentMap.estimateSize()
+
+      //add by kzx
+     /** val ite = currentMap.iterator
+      while(ite.hasNext){
+        print(ite.next()+", ")
+      }
+      println(SizeEstimator.estimate(currentMap))
+      println("下一次迭代")
+**/
+
       if (estimatedSize > _peakMemoryUsedBytes) {
         _peakMemoryUsedBytes = estimatedSize
       }

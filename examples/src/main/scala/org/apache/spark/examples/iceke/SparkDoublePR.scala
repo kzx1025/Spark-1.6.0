@@ -20,7 +20,7 @@ object SparkDoublePR {
     val lines = ctx.textFile(args(0))
     val text = lines.map { s =>
       val parts = s.split("\\s+")
-      (parts(0).toDouble, parts(1).toDouble)
+      (parts(0).toInt, parts(1).toDouble)
     }
 
     val links = if(args(5).toInt == 1)
@@ -37,7 +37,7 @@ object SparkDoublePR {
         urls.map(url => (url, rank / size))
       }
       ranks = contribs.reduceByKey(_ + _)
-        .mapValues(0.15 + 0.85 * _)
+        .mapValues(0.15 + 0.85 * _).map{case (k,v) => (k.asInstanceOf[Int],0.15 + 0.85 * v)}
     }
 
     ranks.saveAsTextFile(args(2))

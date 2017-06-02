@@ -1,5 +1,6 @@
 package org.apache.spark.examples.iceke
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkContext, SparkConf}
 
@@ -19,7 +20,7 @@ object SparkFloatPR {
     val lines = ctx.textFile(args(0))
     val text = lines.map { s =>
       val parts = s.split("\\s+")
-      (parts(0).toFloat, parts(1).toFloat)
+      (parts(0).toInt, parts(1).toFloat)
     }
 
 
@@ -38,7 +39,7 @@ object SparkFloatPR {
         urls.map(url => (url, rank / size))
       }
       ranks = contribs.reduceByKey(_ + _)
-        .mapValues(0.15 + 0.85 * _)
+        .map{case (k,v) => (k.asInstanceOf[Int],0.15 + 0.85 * v)}
     }
 
     ranks.saveAsTextFile(args(2))
