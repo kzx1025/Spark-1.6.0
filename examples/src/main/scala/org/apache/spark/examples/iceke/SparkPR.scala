@@ -25,13 +25,13 @@ object SparkPR {
 
 
 
-    //println("!!!!!!!!!!!!!!text length:" + text.count())
+    println("!!!!!!!!!!!!!!value size:" + text.count())
 
     val links = if(args(5).toInt == 1)
       text.groupByKey().persist(StorageLevel.MEMORY_ONLY_SER)
     else
       text.groupByKey().cache()
-    //println("!!!!!!!!!!!!!!text length:" +links.count())
+    println("!!!!!!!!!!!!!!key size:" +links.count())
     var ranks = links.mapValues(v => 1.0)
 
     for (i <- 1 to iters) {
