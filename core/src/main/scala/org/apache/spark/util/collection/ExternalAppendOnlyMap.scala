@@ -149,29 +149,37 @@ class ExternalAppendOnlyMap[K, V, C](
       if (hadVal) mergeValue(oldVal, curEntry._2) else createCombiner(curEntry._2)
     }
 
+    println("init size is"+SizeEstimator.estimate(currentMap))
     while (entries.hasNext) {
       curEntry = entries.next()
       val estimatedSize = currentMap.estimateSize()
 
-      //add by kzx
-  /**    val ite = currentMap.iterator
-      while(ite.hasNext){
-        print(ite.next()+", ")
-      }
-      println(SizeEstimator.estimate(currentMap))
-      println("下一次迭代")
-**/
 
       if (estimatedSize > _peakMemoryUsedBytes) {
         _peakMemoryUsedBytes = estimatedSize
       }
+
+
       if (maybeSpill(currentMap, estimatedSize)) {
         currentMap = new SizeTrackingAppendOnlyMap[K, C]
       }
       currentMap.changeValue(curEntry._1, update)
       addElementsRead()
+
+/**      //add by kzx
+      val ite = currentMap.iterator
+
+      while(ite.hasNext){
+        print(ite.next()+", ")
+      }
+      println(SizeEstimator.estimate(currentMap))
+      println("下一次迭代")
+  **/
     }
-    println("map size is " + SizeEstimator.estimate(currentMap))
+    //add by kzx
+    println("before peak is"+_peakMemoryUsedBytes)
+    _peakMemoryUsedBytes = SizeEstimator.estimate(currentMap)
+    println("final peak is"+_peakMemoryUsedBytes)
 
   }
 
