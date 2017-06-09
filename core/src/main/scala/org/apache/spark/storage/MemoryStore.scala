@@ -20,13 +20,15 @@ package org.apache.spark.storage
 import java.nio.ByteBuffer
 import java.util.LinkedHashMap
 
+import org.apache.spark.record.OverAllLeader
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 import org.apache.spark.TaskContext
 import org.apache.spark.memory.MemoryManager
 import org.apache.spark.util.{SizeEstimator, Utils}
-import org.apache.spark.util.collection.SizeTrackingVector
+import org.apache.spark.util.collection.{CompactBuffer, SizeTrackingVector}
 
 private case class MemoryEntry(value: Any, size: Long, deserialized: Boolean)
 
@@ -130,6 +132,7 @@ private[spark] class MemoryStore(blockManager: BlockManager, memoryManager: Memo
     val droppedBlocks = new ArrayBuffer[(BlockId, BlockStatus)]
     if (level.deserialized) {
       val sizeEstimate = SizeEstimator.estimate(values.asInstanceOf[AnyRef])
+      //println("cache block size:"+sizeEstimate+",values size:"+values.length)
       tryToPut(blockId, values, sizeEstimate, deserialized = true, droppedBlocks)
       PutResult(sizeEstimate, Left(values.iterator), droppedBlocks)
     } else {
@@ -279,24 +282,58 @@ private[spark] class MemoryStore(blockManager: BlockManager, memoryManager: Memo
 
     // Unroll this block safely, checking whether we have exceeded our threshold periodically
     try {
-      while (values.hasNext && keepUnrolling) {
-        vector += values.next()
-        if (elementsUnrolled % memoryCheckPeriod == 0) {
-          // If our vector's size has exceeded the threshold, request more memory
-          val currentSize = vector.estimateSize()
-          if (currentSize >= memoryThreshold) {
-            val amountToRequest = (currentSize * memoryGrowthFactor - memoryThreshold).toLong
-            keepUnrolling = reserveUnrollMemoryForThisTask(
-              blockId, amountToRequest, droppedBlocks)
-            // New threshold is currentSize * memoryGrowthFactor
-            memoryThreshold += amountToRequest
+      if(OverAllLeader.SameCache) {
+        while (values.hasNext && keepUnrolling) {
+          vector += values.next()
+          if (elementsUnrolled % memoryCheckPeriod == 0) {
+            // If our vector's size has exceeded the threshold, request more memory
+            val currentSize = vector.estimateSize()
+            if (currentSize >= memoryThreshold) {
+              val amountToRequest = (currentSize * memoryGrowthFactor - memoryThreshold).toLong
+              keepUnrolling = reserveUnrollMemoryForThisTask(
+                blockId, amountToRequest, droppedBlocks)
+              // New threshold is currentSize * memoryGrowthFactor
+              memoryThreshold += amountToRequest
+            }
           }
+          elementsUnrolled += 1
         }
-        elementsUnrolled += 1
+      }else{
+        //add by kzx
+        val (valuesIter,tempIter) = values.duplicate
+        val valuesSize = tempIter.size
+        vector.resize(valuesSize+1)
+        while (valuesIter.hasNext && keepUnrolling) {
+          vector += valuesIter.next()
+          if (elementsUnrolled % memoryCheckPeriod == 0) {
+            // If our vector's size has exceeded the threshold, request more memory
+            val currentSize = vector.estimateSize()
+            if (currentSize >= memoryThreshold) {
+              val amountToRequest = (currentSize * memoryGrowthFactor - memoryThreshold).toLong
+              keepUnrolling = reserveUnrollMemoryForThisTask(
+                blockId, amountToRequest, droppedBlocks)
+              // New threshold is currentSize * memoryGrowthFactor
+              memoryThreshold += amountToRequest
+            }
+          }
+          elementsUnrolled += 1
+        }
+
+
+
       }
 
       if (keepUnrolling) {
         // We successfully unrolled the entirety of this block
+       // println("after unroll,vector size:"+vector.length+"vector total size:"+vector._array.length)
+       /** println("cache module analysis!!!!!!!!!!!!")
+        val array = vector.toArray.asInstanceOf[Array[AnyRef]]
+        for(a<-array){
+          println(SizeEstimator.estimate(a));
+
+        }
+         **/
+
         Left(vector.toArray)
       } else {
         // We ran out of space while unrolling the values for this block
@@ -388,7 +425,7 @@ private[spark] class MemoryStore(blockManager: BlockManager, memoryManager: Memo
           entries.put(blockId, entry)
         }
         val valuesOrBytes = if (deserialized) "values" else "bytes"
-        logInfo("Block %s stored as %s in memory (estimated size %s, free %s)".format(
+        println("Block %s stored as %s in memory (estimated size %s, free %s)".format(
           blockId, valuesOrBytes, Utils.bytesToString(size), Utils.bytesToString(blocksMemoryUsed)))
       } else {
         // Tell the block manager that we couldn't put it in memory so that it can drop it to
@@ -479,6 +516,7 @@ private[spark] class MemoryStore(blockManager: BlockManager, memoryManager: Memo
 
   /**
    * Reserve memory for unrolling the given block for this task.
+ *
    * @return whether the request is granted.
    */
   def reserveUnrollMemoryForThisTask(

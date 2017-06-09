@@ -17,6 +17,8 @@
 
 package org.apache.spark
 
+import org.apache.spark.util.SizeEstimator
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -67,6 +69,19 @@ private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
         try {
           logInfo(s"Partition $key not found, computing it")
           val computedValues = rdd.computeOrReadCheckpoint(partition, context)
+
+         /** //add by kzx
+          *val comuteIterator = computedValues.toIterator
+          *if(comuteIterator.size == 52084) {
+            *println("iterator size is " + comuteIterator.size)
+          *}
+
+
+          **//**
+            * while(comuteIterator.hasNext){
+            * println(comuteIterator.next())
+            * }**/
+
 
           // If the task is running locally, do not persist the result
           if (context.isRunningLocally) {
@@ -171,6 +186,8 @@ private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
       blockManager.memoryStore.unrollSafely(key, values, updatedBlocks) match {
         case Left(arr) =>
           // We have successfully unrolled the entire partition, so cache it in memory
+          println("memoryStore estimate size is "+ SizeEstimator.estimate(arr))
+
           updatedBlocks ++=
             blockManager.putArray(key, arr, level, tellMaster = true, effectiveStorageLevel)
           arr.iterator.asInstanceOf[Iterator[T]]

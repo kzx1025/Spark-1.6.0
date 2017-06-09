@@ -19,7 +19,7 @@ object SparkCC {
       (parts(0).toInt, parts(1).toInt)
     }
 
-    val g = edges.groupByKey().persist(StorageLevel.MEMORY_AND_DISK)
+    val g = edges.groupByKey().cache()
 
     var messages = g.map( eMsg => {
       (eMsg._1,eMsg._1)

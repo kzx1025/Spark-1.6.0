@@ -167,19 +167,35 @@ class ExternalAppendOnlyMap[K, V, C](
       addElementsRead()
 
 /**      //add by kzx
-      val ite = currentMap.iterator
+  * val ite = currentMap.iterator
 
-      while(ite.hasNext){
-        print(ite.next()+", ")
-      }
-      println(SizeEstimator.estimate(currentMap))
-      println("下一次迭代")
+  * while(ite.hasNext){
+  * print(ite.next()+", ")
+  * }
+  * println(SizeEstimator.estimate(currentMap))
+  * println("下一次迭代")
   **/
     }
     //add by kzx
-    println("before peak is"+_peakMemoryUsedBytes)
+   // println("before peak is"+_peakMemoryUsedBytes)
     _peakMemoryUsedBytes = SizeEstimator.estimate(currentMap)
-    println("final peak is"+_peakMemoryUsedBytes)
+/**
+    for(da<-currentMap.data) {
+      if (da != null) {
+      println(da + "size is" + SizeEstimator.estimate(da))
+      if (da.isInstanceOf[CompactBuffer[Int]]) {
+        val daBuffer = da.asInstanceOf[CompactBuffer[Int]]
+        println("buffer length:"+daBuffer.size)
+        if(daBuffer.otherElements!=null&&daBuffer.otherElements.length!=0){
+          println(" buffer data length:"+daBuffer.otherElements.length
+            +" array data total size:"+SizeEstimator.estimate(daBuffer.otherElements))
+        }
+      }
+    }
+    }
+  **/
+
+    println("final peak is"+_peakMemoryUsedBytes+"thr array in map size is"+SizeEstimator.estimate(currentMap.data))
 
   }
 

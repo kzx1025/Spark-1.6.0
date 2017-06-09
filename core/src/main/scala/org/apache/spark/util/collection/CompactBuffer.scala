@@ -36,7 +36,7 @@ private[spark] class CompactBuffer[T: ClassTag] extends Seq[T] with Serializable
   private var curSize = 0
 
   // Array for extra elements
-  private var otherElements: Array[T] = null
+  var otherElements: Array[T] = null
 
   def apply(position: Int): T = {
     if (position < 0 || position >= curSize) {
