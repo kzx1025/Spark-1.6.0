@@ -63,6 +63,10 @@ private[scheduler] abstract class Stage(
 
   val numPartitions = rdd.partitions.length
 
+  //add by kzx
+  var includeRDDs: List[RDD[_]] = Nil
+  var followStage: Stage = null
+
   /** Set of jobs that this stage belongs to. */
   val jobIds = new HashSet[Int]
 

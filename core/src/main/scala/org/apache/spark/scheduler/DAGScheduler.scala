@@ -22,7 +22,7 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import scala.collection.Map
+import scala.collection.{mutable, Map}
 import scala.collection.mutable.{HashMap, HashSet, Stack}
 import scala.concurrent.duration._
 import scala.language.existentials
@@ -151,6 +151,8 @@ class DAGScheduler(
   private[scheduler] val failedStages = new HashSet[Stage]
 
   private[scheduler] val activeJobs = new HashSet[ActiveJob]
+
+  var parallelStages:List[HashSet[Stage]] = List()
 
   /**
    * Contains the locations that each RDD's partitions are cached on.  This map's keys are RDD ids
@@ -433,12 +435,14 @@ class DAGScheduler(
   private def getMissingParentStages(stage: Stage): List[Stage] = {
     val missing = new HashSet[Stage]
     val visited = new HashSet[RDD[_]]
+    val stageRDDs = new HashSet[RDD[_]]
     // We are manually maintaining a stack here to prevent StackOverflowError
     // caused by recursively visiting
     val waitingForVisit = new Stack[RDD[_]]
     def visit(rdd: RDD[_]) {
       if (!visited(rdd)) {
         visited += rdd
+        stageRDDs+=rdd
         val rddHasUncachedPartitions = getCacheLocs(rdd).contains(Nil)
         if (rddHasUncachedPartitions) {
           for (dep <- rdd.dependencies) {
@@ -448,7 +452,12 @@ class DAGScheduler(
                 if (!mapStage.isAvailable) {
                   missing += mapStage
                 }
+                val tempSet = new HashSet[RDD[_]]
+                tempSet ++= stageRDDs
+                mapStage.includeRDDs = tempSet.toList
+                stageRDDs.clear()
               case narrowDep: NarrowDependency[_] =>
+
                 waitingForVisit.push(narrowDep.rdd)
             }
           }
@@ -550,11 +559,9 @@ class DAGScheduler(
    * @param callSite where in the user program this job was called
    * @param resultHandler callback to pass each result to
    * @param properties scheduler properties to attach to this job, e.g. fair scheduler pool name
-   *
-   * @return a JobWaiter object that can be used to block until the job finishes executing
+    * @return a JobWaiter object that can be used to block until the job finishes executing
    *         or can be used to cancel the job.
-   *
-   * @throws IllegalArgumentException when partitions ids are illegal
+    * @throws IllegalArgumentException when partitions ids are illegal
    */
   def submitJob[T, U](
       rdd: RDD[T],
@@ -597,8 +604,7 @@ class DAGScheduler(
    * @param callSite where in the user program this job was called
    * @param resultHandler callback to pass each result to
    * @param properties scheduler properties to attach to this job, e.g. fair scheduler pool name
-   *
-   * @throws Exception when the job fails
+    * @throws Exception when the job fails
    */
   def runJob[T, U](
       rdd: RDD[T],
@@ -858,10 +864,68 @@ class DAGScheduler(
     val stageInfos = stageIds.flatMap(id => stageIdToStage.get(id).map(_.latestInfo))
     listenerBus.post(
       SparkListenerJobStart(job.jobId, jobSubmissionTime, stageInfos, properties))
+
+    //add by kzx
+    preProcessJob(finalStage)
+
     submitStage(finalStage)
 
     submitWaitingStages()
   }
+
+  def preProcessJob(finalStage: Stage): Unit ={
+    //重新调整stage
+    adjustStage(finalStage)
+    //val sortParallelStages = parallelStages.reverse
+
+    for(currentStages<-parallelStages){
+
+      calStageMemory(currentStages)
+
+    }
+
+
+
+  }
+
+  def calStageMemory(currentStages:mutable.HashSet[Stage]): Unit ={
+    for(tempStage<-currentStages.toSeq){
+      println("stageId:"+tempStage.id)
+      println("stage RDDs:"+tempStage.rdd.getNarrowAncestors)
+    }
+
+  }
+
+  def adjustStage(finalStage: Stage): Unit ={
+    //waitingSatges is full
+    val stagesStack: Stack[Stage] = new Stack[Stage]
+    stagesStack.push(finalStage)
+    var beforeStages:List[Stage] = List()
+    var tempStage:Stage = null
+    var isVisit = false
+
+    //默认finalStage只有一个
+    val finalSet = new HashSet[Stage]
+    finalSet+=finalStage
+    parallelStages = finalSet+:parallelStages
+
+    while(beforeStages.nonEmpty && stagesStack.nonEmpty || !isVisit){
+      isVisit = true
+      val tempParallel = new HashSet[Stage]
+      tempStage = stagesStack.pop()
+      beforeStages = getMissingParentStages(tempStage)
+      tempParallel++=beforeStages
+      parallelStages = tempParallel+:parallelStages
+      for(t<-beforeStages){
+        t.followStage = tempStage
+        stagesStack.push(t)
+      }
+    }
+
+  }
+
+
+
 
   private[scheduler] def handleMapStageSubmitted(jobId: Int,
       dependency: ShuffleDependency[_, _, _],
@@ -915,6 +979,7 @@ class DAGScheduler(
       logDebug("submitStage(" + stage + ")")
       if (!waitingStages(stage) && !runningStages(stage) && !failedStages(stage)) {
         val missing = getMissingParentStages(stage).sortBy(_.id)
+
         logDebug("missing: " + missing)
         if (missing.isEmpty) {
           logInfo("Submitting " + stage + " (" + stage.rdd + "), which has no missing parents")
