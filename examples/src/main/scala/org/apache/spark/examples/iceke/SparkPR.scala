@@ -45,7 +45,8 @@ object SparkPR {
         .mapValues(0.15 + 0.85 * _)
     }
 
-    ranks.saveAsTextFile(args(2))
+   // ranks.saveAsTextFile(args(2))
+    println(ranks.count())
     //ranks.foreach(t => println(t._1 + ":" + t._2))
 
     ctx.stop()
