@@ -64,6 +64,8 @@ object SparkSubmit {
 
   val author = "kzx"
 
+  var methodTimes = 1
+
   // Cluster managers
   private val YARN = 1
   private val STANDALONE = 2
@@ -739,10 +741,12 @@ object SparkSubmit {
       println("!!!!!"+"the first invoke failed")
     }
 
+    methodTimes += 1
+
 
     try {
       mainMethod.invoke(null, childArgs.toArray)
-      println("!!!!!"+"the second invoke,get the new executor-memory")
+      println("!!!!!"+"the second invoke, 配置新内存")
     } catch {
       case t: Throwable =>
         findCause(t) match {
