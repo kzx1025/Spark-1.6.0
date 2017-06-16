@@ -62,6 +62,8 @@ private[deploy] object SparkSubmitAction extends Enumeration {
  */
 object SparkSubmit {
 
+  val author = "kzx"
+
   // Cluster managers
   private val YARN = 1
   private val STANDALONE = 2

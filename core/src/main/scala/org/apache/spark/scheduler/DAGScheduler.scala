@@ -22,6 +22,7 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
+import org.apache.spark.deploy.SparkSubmit
 import org.apache.spark.scheduler.cluster.SparkDeploySchedulerBackend
 import org.apache.spark.scheduler.local.LocalBackend
 
@@ -896,8 +897,10 @@ class DAGScheduler(
       //sparkBackend.reStartAppClient()
     }else if(backend.isInstanceOf[LocalBackend]){
       println("localBackend!!!!!")
+      println("SparkSubmit author:"+SparkSubmit.author)
       sc.stop()
       println("测试:SparkContext stop,so i will not be displayed")
+
     }
 
 
