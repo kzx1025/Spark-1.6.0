@@ -22,6 +22,9 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
+import org.apache.spark.scheduler.cluster.SparkDeploySchedulerBackend
+import org.apache.spark.scheduler.local.LocalBackend
+
 import scala.collection.{mutable, Map}
 import scala.collection.mutable.{HashMap, HashSet, Stack}
 import scala.concurrent.duration._
@@ -882,6 +885,14 @@ class DAGScheduler(
 
       calStageMemory(currentStages)
 
+    }
+
+    val backend = sc.schedulerBackend
+    if(backend.isInstanceOf[SparkDeploySchedulerBackend]){
+      val sparkBackend = backend.asInstanceOf[SparkDeploySchedulerBackend]
+      sparkBackend.reStartAppClient()
+    }else if(backend.isInstanceOf[LocalBackend]){
+      println("localBackend!!!!!")
     }
 
 

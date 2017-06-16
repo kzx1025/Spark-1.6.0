@@ -85,6 +85,7 @@ private[spark] class AppClient(
     override def onStart(): Unit = {
       try {
         registerWithMaster(1)
+        logInfo("!!!!!!!!!!AppClient onStart method is executing")
       } catch {
         case e: Exception =>
           logWarning("Failed to connect to master", e)
@@ -114,6 +115,20 @@ private[spark] class AppClient(
         })
       }
     }
+
+
+    /**
+      * add by kzx
+      *取消一个应用, 重新启动一个应用,用于重新配置内存
+      */
+
+    def reStartApp():Unit={
+      //TODO
+
+    }
+
+
+
 
     /**
      * Register with all masters asynchronously. It will call `registerWithMaster` every

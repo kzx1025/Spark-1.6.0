@@ -27,6 +27,8 @@ import org.apache.spark.launcher.{LauncherBackend, SparkAppHandle}
 import org.apache.spark.scheduler._
 import org.apache.spark.util.Utils
 
+import scala.collection.mutable.{HashSet, HashMap}
+
 private[spark] class SparkDeploySchedulerBackend(
     scheduler: TaskSchedulerImpl,
     sc: SparkContext,
@@ -48,6 +50,12 @@ private[spark] class SparkDeploySchedulerBackend(
 
   private val maxCores = conf.getOption("spark.cores.max").map(_.toInt)
   private val totalExpectedCores = maxCores.getOrElse(0)
+
+  //add by kzx 存储已有的executor信息
+  case class ExecutorInfo(executorId:String, workerId: String, hostPort: String, cores: Int,
+                          memory: Int)
+
+  private val executorsSet = new HashSet[ExecutorInfo]
 
   override def start() {
     super.start()
@@ -97,6 +105,18 @@ private[spark] class SparkDeploySchedulerBackend(
     launcherBackend.setState(SparkAppHandle.State.RUNNING)
   }
 
+
+  //add by kzx
+  def reStartAppClient():Unit={
+    logInfo("!!!!!!!!!reStartAppClient is executing now")
+    client.stop()
+    client.start()
+    launcherBackend.setState(SparkAppHandle.State.SUBMITTED)
+    waitForRegistration()
+    launcherBackend.setState(SparkAppHandle.State.RUNNING)
+  }
+
+
   override def stop(): Unit = synchronized {
     stop(SparkAppHandle.State.FINISHED)
   }
@@ -133,6 +153,9 @@ private[spark] class SparkDeploySchedulerBackend(
     memory: Int) {
     logInfo("Granted executor ID %s on hostPort %s with %d cores, %s RAM".format(
       fullId, hostPort, cores, Utils.megabytesToString(memory)))
+    //add by kzx
+    executorsSet+=ExecutorInfo(fullId,workerId,hostPort,cores,memory)
+
   }
 
   override def executorRemoved(fullId: String, message: String, exitStatus: Option[Int]) {
@@ -171,7 +194,8 @@ private[spark] class SparkDeploySchedulerBackend(
 
   /**
    * Kill the given list of executors through the Master.
-   * @return whether the kill request is acknowledged.
+    *
+    * @return whether the kill request is acknowledged.
    */
   protected override def doKillExecutors(executorIds: Seq[String]): Boolean = {
     Option(client) match {
