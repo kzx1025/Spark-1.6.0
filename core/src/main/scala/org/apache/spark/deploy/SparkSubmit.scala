@@ -124,6 +124,7 @@ object SparkSubmit {
       case SparkSubmitAction.KILL => kill(appArgs)
       case SparkSubmitAction.REQUEST_STATUS => requestStatus(appArgs)
     }
+    println("SparkSubmit main method execute finished")
   }
 
   /**
@@ -732,14 +733,16 @@ object SparkSubmit {
     //add by kzx
     try{
       mainMethod.invoke(null, childArgs.toArray)
-    }catch{
-      case _=>
       println("!!!!!"+"the first invoke,get the new executor-memory")
+    }catch{
+      case t: Throwable=>
+      println("!!!!!"+"the first invoke failed")
     }
 
-    println("!!!!!"+"the first invoke,get the new executor-memory")
+
     try {
       mainMethod.invoke(null, childArgs.toArray)
+      println("!!!!!"+"the second invoke,get the new executor-memory")
     } catch {
       case t: Throwable =>
         findCause(t) match {
