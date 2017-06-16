@@ -887,12 +887,17 @@ class DAGScheduler(
 
     }
 
+
+
+
     val backend = sc.schedulerBackend
     if(backend.isInstanceOf[SparkDeploySchedulerBackend]){
       val sparkBackend = backend.asInstanceOf[SparkDeploySchedulerBackend]
       //sparkBackend.reStartAppClient()
     }else if(backend.isInstanceOf[LocalBackend]){
       println("localBackend!!!!!")
+      sc.stop()
+      println("测试:SparkContext stop,so i will not be displayed")
     }
 
 

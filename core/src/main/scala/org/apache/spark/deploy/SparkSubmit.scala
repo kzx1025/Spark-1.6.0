@@ -102,7 +102,7 @@ object SparkSubmit {
       ____              __
      / __/__  ___ _____/ /__
     _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/\_,_/_/ /_/\_\   version %s
+   /___/ .__/\_,_/_/ /_/\_\   version %s, and this version is modified by kzx, a handsome boy.
       /_/
                         """.format(SPARK_VERSION))
     printStream.println("Type --help for more information.")
@@ -727,6 +727,15 @@ object SparkSubmit {
         e
     }
 
+    //add by kzx
+    try{
+      mainMethod.invoke(null, childArgs.toArray)
+    }catch{
+      case _=>
+      println("!!!!!"+"the first invoke,get the new executor-memory")
+    }
+
+    println("!!!!!"+"the first invoke,get the new executor-memory")
     try {
       mainMethod.invoke(null, childArgs.toArray)
     } catch {
