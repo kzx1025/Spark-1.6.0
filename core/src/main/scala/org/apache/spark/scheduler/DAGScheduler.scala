@@ -890,7 +890,7 @@ class DAGScheduler(
     val backend = sc.schedulerBackend
     if(backend.isInstanceOf[SparkDeploySchedulerBackend]){
       val sparkBackend = backend.asInstanceOf[SparkDeploySchedulerBackend]
-      sparkBackend.reStartAppClient()
+      //sparkBackend.reStartAppClient()
     }else if(backend.isInstanceOf[LocalBackend]){
       println("localBackend!!!!!")
     }
